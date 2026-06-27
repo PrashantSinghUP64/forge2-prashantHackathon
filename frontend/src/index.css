@@ -699,7 +699,7 @@ textarea:focus {
 [data-theme="dark"] body { background: var(--bg-primary); color: var(--text-primary); }
 [data-theme="dark"] .sidebar { background: #151e2e; border-right: 1px solid var(--border-color); }
 [data-theme="dark"] .app-shell { background: var(--bg-primary); color: var(--text-primary); }
-[data-theme="dark"] .login-panel, [data-theme="dark"] .ticket-card, [data-theme="dark"] .metrics, [data-theme="dark"] .metrics-card, [data-theme="dark"] .conversation, [data-theme="dark"] .audit-view, [data-theme="dark"] .modal-content, [data-theme="dark"] .tenant-proof { background: var(--bg-secondary); border-color: var(--border-color); color: var(--text-primary); box-shadow: none; }
+[data-theme="dark"] .login-panel, [data-theme="dark"] .ticket-card, [data-theme="dark"] .metrics, [data-theme="dark"] .metrics-card, [data-theme="dark"] .conversation, [data-theme="dark"] .audit-view, [data-theme="dark"] .modal-content, [data-theme="dark"] .tenant-proof, [data-theme="dark"] .activity-panel { background: var(--bg-secondary); border-color: var(--border-color); color: var(--text-primary); box-shadow: none; }
 [data-theme="dark"] input, [data-theme="dark"] select, [data-theme="dark"] textarea { background: var(--bg-primary); border-color: var(--border-color); color: var(--text-primary); }
 [data-theme="dark"] .login-panel h1, [data-theme="dark"] .topbar h2, [data-theme="dark"] .ticket-card h3, [data-theme="dark"] .modal h3, [data-theme="dark"] .conversation h3, [data-theme="dark"] .activity-panel h3 { color: var(--text-primary); }
 [data-theme="dark"] nav button { color: var(--text-secondary); }
@@ -710,6 +710,7 @@ textarea:focus {
 [data-theme="dark"] .comment header { border-bottom-color: var(--border-color); }
 [data-theme="dark"] .comment header strong { color: var(--text-primary); }
 [data-theme="dark"] .activity-item div strong { color: var(--text-primary); }
+[data-theme="dark"] .activity-item p { color: var(--text-secondary); }
 [data-theme="dark"] .activity-item span { background: var(--border-color); }
 [data-theme="dark"] .activity-item::before { border-left-color: var(--border-color); }
 [data-theme="dark"] .tenant-proof { background: var(--bg-primary); }
