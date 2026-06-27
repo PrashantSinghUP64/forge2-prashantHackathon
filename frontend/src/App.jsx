@@ -203,8 +203,6 @@ function App() {
   }, [tickets, filters, user])
 
   const activeTicket = selectedTicket
-    ? tickets.find((ticket) => ticket.id === selectedTicket.id) || selectedTicket
-    : null
 
   async function fetchMetrics() {
     const data = await apiGet('/dashboard/metrics')
@@ -347,13 +345,14 @@ function App() {
       })
       setTickets(next)
       setMetrics(calculateMetrics(next))
+      if (selectedTicket && selectedTicket.id === id) setSelectedTicket(next.find(t => t.id === id))
       return
     }
 
     const data = await writeApi(`/tickets/${id}`, 'PATCH', patch)
     if (data) {
       setTickets(tickets.map((ticket) => (ticket.id === id ? data : ticket)))
-      setSelectedTicket(data)
+      setSelectedTicket(prev => prev ? { ...prev, ...data, comments: prev.comments, activities: prev.activities } : data)
       fetchMetrics()
     }
   }
@@ -367,7 +366,7 @@ function App() {
     const data = await writeApi(`/tickets/${activeTicket.id}/assign`, 'POST', {})
     if (data) {
       setTickets(tickets.map((ticket) => (ticket.id === data.id ? data : ticket)))
-      setSelectedTicket(data)
+      setSelectedTicket(prev => prev ? { ...prev, ...data, comments: prev.comments, activities: prev.activities } : data)
     }
   }
 
