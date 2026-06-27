@@ -31,16 +31,16 @@ class DatabaseSeeder extends Seeder
         ];
 
         $tickets = [
-            ['Cannot access billing page', 'The billing page keeps loading forever after the last invoice update.', 'open', 'urgent', ['billing', 'login'], 45],
-            ['Refund status question', 'Customer is asking for clarity on a refund promised by finance.', 'pending', 'medium', ['refund'], 620],
+            ['Cannot access billing page', 'The billing page keeps loading forever after the last invoice update.', 'open', 'critical', ['billing', 'login'], 45],
+            ['Refund status question', 'Customer is asking for clarity on a refund promised by finance.', 'in_progress', 'medium', ['refund'], 620],
             ['Webhook retry failures', 'Webhook events are not retrying after a temporary partner outage.', 'open', 'high', ['integrations'], 130],
             ['New teammate invite bounced', 'Invite email bounced for a new support teammate.', 'resolved', 'low', ['account'], 4000],
-            ['Mobile app crash on checkout', 'Checkout crashes on Android after applying a coupon.', 'open', 'urgent', ['mobile', 'checkout'], -35],
-            ['CSV export missing rows', 'The weekly CSV export is missing older resolved conversations.', 'pending', 'high', ['reports'], 210],
+            ['Mobile app crash on checkout', 'Checkout crashes on Android after applying a coupon.', 'open', 'critical', ['mobile', 'checkout'], -35],
+            ['CSV export missing rows', 'The weekly CSV export is missing older resolved conversations.', 'in_progress', 'high', ['reports'], 210],
             ['Change primary contact', 'Customer wants the primary account contact switched this week.', 'closed', 'low', ['account'], 8000],
             ['Priority label mismatch', 'A high-priority ticket appeared as medium in the agent queue.', 'open', 'medium', ['queue'], 900],
             ['SLA timer looks wrong', 'Customer reports a breached ticket still showing as healthy.', 'open', 'high', ['sla'], -90],
-            ['Invoice PDF not downloading', 'The invoice download button returns a 500 error.', 'pending', 'urgent', ['billing', 'pdf'], 25],
+            ['Invoice PDF not downloading', 'The invoice download button returns a 500 error.', 'in_progress', 'critical', ['billing', 'pdf'], 25],
             ['Customer portal typo', 'There is a typo on the customer portal confirmation screen.', 'resolved', 'low', ['portal'], 5000],
             ['Agent notification delay', 'Assigned tickets take several minutes to appear in notifications.', 'open', 'medium', ['notifications'], 780],
         ];

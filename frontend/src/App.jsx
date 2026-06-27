@@ -516,8 +516,8 @@ function App() {
             <h3>Global Audit Log</h3>
             <p>Recent activity across the organization.</p>
             <div className="activity-panel">
-               {(tickets.flatMap(t => t.activities || []).sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5)).map(act => (
-                 <div className="activity-item" key={act.id}><span/><div><strong>{act.user?.name || 'System'}</strong><p>{act.description}</p><small>{formatDate(act.created_at)}</small></div></div>
+               {(usingApi && metrics?.recent_activity ? metrics.recent_activity : tickets.flatMap(t => t.activities || []).sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5)).map(act => (
+                 <div className="activity-item" key={act.id}><span/><div><strong>{act.user?.name || 'System'}</strong><p>{act.description || act.action}</p><small>{formatDate(act.created_at)}</small></div></div>
                ))}
             </div>
           </section>
