@@ -11,7 +11,7 @@
 - [x] Frontend deploy workflow present: `.github/workflows/deploy-pages.yml`
 - [x] Evidence folders present: `evidence/screenshots/`, `slack-export/screenshots/`
 - [ ] Final Slack export/screenshots captured from the real workspace and committed before submission
-- [ ] Final app/CI screenshots captured and committed before submission
+- [x] Final app/CI screenshots captured and committed before submission: `evidence/screenshots/`
 
 ## Honest Notes
 
