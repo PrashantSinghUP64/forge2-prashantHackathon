@@ -597,7 +597,7 @@ function App() {
             </section>
             
             {metrics.total_tickets > 0 && (
-              <div style={{ margin: '0 0 24px', background: 'var(--card-bg, #fff)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-color, #cad4df)' }}>
+              <div style={{ margin: '0 0 24px', background: 'var(--bg-secondary, #fff)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-color, #cad4df)' }}>
                 <h4 style={{ margin: '0 0 12px', fontSize: '13px', color: 'var(--text-secondary, #5c6b7d)', textTransform: 'uppercase' }}>Ticket Distribution Graph</h4>
                 <div style={{ display: 'flex', height: '24px', borderRadius: '12px', overflow: 'hidden', background: '#e2e8f0' }}>
                    <div style={{ width: `${(metrics.open_tickets / metrics.total_tickets) * 100}%`, background: '#3b82f6' }} title={`Open: ${metrics.open_tickets}`} />

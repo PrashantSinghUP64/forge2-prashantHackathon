@@ -713,3 +713,16 @@ textarea:focus {
 [data-theme="dark"] .activity-item span { background: var(--border-color); }
 [data-theme="dark"] .activity-item::before { border-left-color: var(--border-color); }
 [data-theme="dark"] .tenant-proof { background: var(--bg-primary); }
+[data-theme="dark"] {
+  --card-bg: #1e293b;
+}
+[data-theme="dark"] .metric, [data-theme="dark"] .toolbar, [data-theme="dark"] .ticket-card, [data-theme="dark"] .customers-view .metric { background: var(--bg-secondary); border-color: var(--border-color); color: var(--text-primary); }
+[data-theme="dark"] .metric span { color: var(--text-secondary); }
+[data-theme="dark"] .badge { border: 1px solid var(--border-color); }
+[data-theme="dark"] .badge.pending { background: #452c00; color: #ffb84d; }
+[data-theme="dark"] .badge.resolved { background: #064023; color: #4ade80; }
+[data-theme="dark"] .badge.closed { background: #1e293b; color: #cbd5e1; }
+[data-theme="dark"] .badge.priority-high { background: #452c00; color: #ffb84d; }
+[data-theme="dark"] .badge.priority-medium { background: #0a2569; color: #60a5fa; }
+[data-theme="dark"] .badge.priority-low { background: #064023; color: #4ade80; }
+[data-theme="dark"] .ticket-card p, [data-theme="dark"] .ticket-card small { color: var(--text-secondary); }
