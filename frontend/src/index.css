@@ -726,3 +726,7 @@ textarea:focus {
 [data-theme="dark"] .badge.priority-medium { background: #0a2569; color: #60a5fa; }
 [data-theme="dark"] .badge.priority-low { background: #064023; color: #4ade80; }
 [data-theme="dark"] .ticket-card p, [data-theme="dark"] .ticket-card small { color: var(--text-secondary); }
+[data-theme="dark"] .ticket-row { background: var(--bg-secondary); border-color: var(--border-color); color: var(--text-primary); box-shadow: none; }
+[data-theme="dark"] .metric-btn { background: transparent; border: none; padding: 0; }
+[data-theme="dark"] .tag-list span { background: var(--border-color); color: var(--text-primary); }
+[data-theme="dark"] .ticket-row:hover { border-color: var(--accent-color); background: var(--bg-primary); }
