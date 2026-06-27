@@ -19,7 +19,7 @@ class SlackService
         $channelId = 'C0BDQ4Y5Q3E'; // pulse deskteam
 
         $priorityEmoji = match ($ticket->priority) {
-            'urgent' => '🔴',
+            'critical' => '🔴',
             'high' => '🟠',
             'medium' => '🟡',
             'low' => '🟢',

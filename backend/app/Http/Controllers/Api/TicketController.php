@@ -75,7 +75,7 @@ class TicketController extends Controller
         $validated = $request->validate([
             'subject' => 'required|string|max:255',
             'description' => 'required|string',
-            'priority' => 'required|in:low,medium,high,urgent',
+            'priority' => 'required|in:low,medium,high,critical',
             'tags' => 'nullable|array',
             'tags.*' => 'string|max:40',
         ]);
