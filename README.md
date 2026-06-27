@@ -2,6 +2,38 @@
 
 PulseDesk is a multi-tenant support-desk SaaS for the Forge 2 main hackathon. It uses a Laravel REST API and a React/Vite frontend, with tenant-scoped tickets, roles, conversations, SLA timers, assignment queues, audit logs, and dashboard metrics.
 
+## Hackathon Features Showcase
+
+### 1. Slack Integration (Multi-Channel Notifications)
+
+We successfully integrated Slack to send real-time notifications to multiple channels simultaneously when a critical ticket is created.
+
+**Agent Log Channel:**
+![Agent Log Channel](06-slack-agent-log-ticket-alert.png)
+
+**PulseDesk Team Channel:**
+![PulseDesk Team Channel](07-slack-team-channel-ticket-alert.png)
+
+### 2. Live Ticket Creation (API Integrated)
+
+The frontend successfully communicates with the live backend to authenticate users and create support tickets.
+
+**Login Screen:**
+![Login Screen](01-login-page.png)
+
+**Ticket Dashboard (Dark Mode):**
+![Ticket Dashboard Dark Mode](03-dashboard-dark-mode.png)
+
+### 3. Chat Widget and Dark Mode
+
+We built a beautiful, fully functional chat widget that seamlessly switches between Light and Dark mode, ensuring perfect text legibility (pure white bold text in dark mode) and premium aesthetics.
+
+**Chat Widget (Light Mode):**
+![Chat Widget Light Mode](02-pulsedesk%20support%20chat%20widget.png)
+
+**Chat Widget (Dark Mode):**
+![Chat Widget Dark Mode](03-dashboard-dark-mode.png)
+
 ## Live URL
 
 Frontend static demo: https://prashantsinghup64.github.io/forge2-prashantHackathon/
@@ -88,35 +120,3 @@ Use the `Laravel API` toggle on the login screen when the backend is running. Us
 - OpenClaw/coder: `z-ai/glm-5.1`
 
 Secrets are redacted in committed agent config files and should be supplied through environment variables.
-
-## Hackathon Features Showcase
-
-### 1. Slack Integration (Multi-Channel Notifications)
-
-We successfully integrated Slack to send real-time notifications to multiple channels simultaneously when a critical ticket is created.
-
-**Agent Log Channel:**
-![Agent Log Channel](06-slack-agent-log-ticket-alert.png)
-
-**PulseDesk Team Channel:**
-![PulseDesk Team Channel](07-slack-team-channel-ticket-alert.png)
-
-### 2. Live Ticket Creation (API Integrated)
-
-The frontend successfully communicates with the live backend to authenticate users and create support tickets.
-
-**Login Screen:**
-![Login Screen](01-login-page.png)
-
-**Ticket Dashboard (Dark Mode):**
-![Ticket Dashboard Dark Mode](03-dashboard-dark-mode.png)
-
-### 3. Chat Widget and Dark Mode
-
-We built a beautiful, fully functional chat widget that seamlessly switches between Light and Dark mode, ensuring perfect text legibility (pure white bold text in dark mode) and premium aesthetics.
-
-**Chat Widget (Light Mode):**
-![Chat Widget Light Mode](02-pulsedesk%20support%20chat%20widget.png)
-
-**Chat Widget (Dark Mode):**
-![Chat Widget Dark Mode](03-dashboard-dark-mode.png)
