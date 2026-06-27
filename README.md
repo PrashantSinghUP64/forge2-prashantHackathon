@@ -97,3 +97,22 @@ Use the `Laravel API` toggle on the login screen when the backend is running. Us
 - OpenClaw/coder: `z-ai/glm-5.1`
 
 Secrets are redacted in committed agent config files and should be supplied through environment variables.
+
+
+## Hackathon Features Showcase
+
+### 1. Slack Integration (Multi-Channel Notifications)
+We successfully integrated Slack to send real-time notifications to multiple channels simultaneously when a critical ticket is created.
+- **Agent Log Channel:** *(Drop your agent-log screenshot here)*
+- **PulseDesk Team Channel:** *(Drop your all-pulsedesk-team screenshot here)*
+
+### 2. Live Ticket Creation (API Integrated)
+The frontend successfully communicates with the live backend to authenticate users and create support tickets.
+- **Login Screen:** *(Drop your login screenshot here)*
+- **Ticket Dashboard (Dark Mode):** *(Drop your dashboard screenshot here)*
+
+### 3. Chat Widget and Dark Mode
+We built a beautiful, fully functional chat widget that seamlessly switches between Light and Dark mode, ensuring perfect text legibility (pure white bold text in dark mode) and premium aesthetics.
+- **Chat Widget (Light Mode):** *(Drop your light mode chat screenshot here)*
+- **Chat Widget (Dark Mode):** *(Drop your dark mode chat screenshot here)*
+
