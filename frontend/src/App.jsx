@@ -146,7 +146,7 @@ const seedTickets = [
 const statusOptions = ['all', 'open', 'in_progress', 'resolved', 'closed']
 const priorityOptions = ['all', 'critical', 'high', 'medium', 'low']
 const assigneeOptions = ['all', 'mine', 'unassigned']
-const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+const apiUrl = 'https://forge2-prashanthackathon-production.up.railway.app/api'
 
 function App() {
   const [apiMode, setApiMode] = useState(localStorage.getItem('pulsedesk-api-mode') || 'demo')
