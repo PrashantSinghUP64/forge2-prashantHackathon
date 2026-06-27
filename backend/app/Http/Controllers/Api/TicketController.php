@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\Comment;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Services\SlackService;
 use Illuminate\Http\Request;
 
 class TicketController extends Controller
@@ -92,6 +93,9 @@ class TicketController extends Controller
 
         $this->activity($ticket, $user->id, 'created', 'Ticket created with priority '.$validated['priority']);
 
+        // Send Slack Notification
+        (new SlackService())->notifyNewTicket($ticket, $user);
+
         return response()->json(
             $this->presentTicket($ticket->load(['requester', 'assignee'])->loadCount('comments')),
             201
@@ -161,6 +165,9 @@ class TicketController extends Controller
         ]);
 
         $this->activity($ticket, $user->id, 'commented', 'Added a '.str_replace('_', ' ', $validated['type']));
+
+        // Send Slack Notification for comments
+        (new SlackService())->notifyComment($ticket, $user, $comment);
 
         return response()->json($comment->load('user'), 201);
     }
