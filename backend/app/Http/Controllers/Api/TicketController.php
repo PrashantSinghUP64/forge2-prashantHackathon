@@ -93,7 +93,6 @@ class TicketController extends Controller
 
         $this->activity($ticket, $user->id, 'created', 'Ticket created with priority '.$validated['priority']);
 
-        // Send Slack Notification
         (new SlackService())->notifyNewTicket($ticket, $user);
 
         return response()->json(
@@ -166,7 +165,6 @@ class TicketController extends Controller
 
         $this->activity($ticket, $user->id, 'commented', 'Added a '.str_replace('_', ' ', $validated['type']));
 
-        // Send Slack Notification for comments
         (new SlackService())->notifyComment($ticket, $user, $comment);
 
         return response()->json($comment->load('user'), 201);

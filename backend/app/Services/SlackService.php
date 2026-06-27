@@ -16,7 +16,7 @@ class SlackService
 
     public function notifyNewTicket($ticket, $user)
     {
-        $channelId = 'C0BDQ4Y5Q3E'; // pulse deskteam
+        $channelId = 'C0BDQ4Y5Q3E';
 
         $priorityEmoji = match ($ticket->priority) {
             'critical' => '🔴',
@@ -31,8 +31,8 @@ class SlackService
         $message .= "*Priority:* {$priorityEmoji} " . ucfirst($ticket->priority) . "\n";
         $message .= "*Requester:* {$user->name} ({$user->email})\n";
         
-        $this->sendMessage('C0BDQ4Y5Q3E', $message); // pulse deskteam
-        $this->sendMessage('C0BDQ5ENRHA', $message); // log
+        $this->sendMessage('C0BDQ4Y5Q3E', $message);
+        $this->sendMessage('C0BDQ5ENRHA', $message);
     }
 
     public function notifyComment($ticket, $user, $comment)
@@ -42,8 +42,8 @@ class SlackService
         $message .= "*From:* {$user->name}\n";
         $message .= "> " . substr($comment->body, 0, 100) . (strlen($comment->body) > 100 ? '...' : '');
 
-        $this->sendMessage('C0BDQ4Y5Q3E', $message); // pulse deskteam
-        $this->sendMessage('C0BDQ5ENRHA', $message); // log
+        $this->sendMessage('C0BDQ4Y5Q3E', $message);
+        $this->sendMessage('C0BDQ5ENRHA', $message);
     }
 
     protected function sendMessage($channel, $text)

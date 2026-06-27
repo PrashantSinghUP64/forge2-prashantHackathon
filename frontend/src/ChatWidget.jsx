@@ -19,7 +19,7 @@ export default function ChatWidget() {
 
   return (
     <div className="chat-widget-window">
-      {/* Header */}
+      
       <div className="chat-widget-header">
         <div className="chat-widget-header-info">
           <div className="chat-widget-avatar">
@@ -40,11 +40,11 @@ export default function ChatWidget() {
         </button>
       </div>
 
-      {/* Chat Area */}
+      
       <div className="chat-widget-body">
         <div className="chat-widget-time">1:57 pm</div>
         
-        {/* Message 1 */}
+        
         <div className="chat-widget-message">
           <div className="chat-widget-message-avatar">PS</div>
           <div className="chat-widget-message-bubble">
@@ -52,7 +52,7 @@ export default function ChatWidget() {
           </div>
         </div>
 
-        {/* Message 2 */}
+        
         <div className="chat-widget-message">
           <div className="chat-widget-message-avatar">PS</div>
           <div className="chat-widget-message-bubble">
@@ -61,7 +61,7 @@ export default function ChatWidget() {
         </div>
       </div>
 
-      {/* Quick Replies */}
+      
       <div className="chat-widget-quick-replies">
         <button className="chat-widget-chip">
           <span className="chat-widget-chip-icon">📦</span> Track an order
@@ -74,7 +74,7 @@ export default function ChatWidget() {
         </button>
       </div>
 
-      {/* Input Area */}
+      
       <div className="chat-widget-input-area">
         <input 
           type="text" 
