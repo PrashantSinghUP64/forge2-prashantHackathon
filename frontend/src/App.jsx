@@ -1,350 +1,693 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './index.css'
 
+const demoUsers = {
+  admin: {
+    id: 1,
+    name: 'Admin User',
+    email: 'admin@example.com',
+    role: 'admin',
+    organization: { id: 1, name: 'Acme Corp' },
+  },
+  agent: {
+    id: 2,
+    name: 'Meera Agent',
+    email: 'agent1@example.com',
+    role: 'agent',
+    organization: { id: 1, name: 'Acme Corp' },
+  },
+  customer: {
+    id: 4,
+    name: 'Nisha Customer',
+    email: 'customer1@example.com',
+    role: 'customer',
+    organization: { id: 1, name: 'Acme Corp' },
+  },
+}
+
+const seedTickets = [
+  {
+    id: 101,
+    subject: 'Cannot access billing page',
+    description: 'The billing page keeps loading forever after the last invoice update. Customer is blocked from downloading invoices before finance close.',
+    status: 'open',
+    priority: 'urgent',
+    tags: ['billing', 'login'],
+    requester: demoUsers.customer,
+    requester_id: 4,
+    assignee: null,
+    assignee_id: null,
+    comments_count: 2,
+    created_at: new Date(Date.now() - 1000 * 60 * 44).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
+    sla: { breached: false, minutes_remaining: 42 },
+    comments: [
+      { id: 1, type: 'public_reply', body: 'I tried Chrome and mobile Safari. Both freeze on the invoice screen.', user: demoUsers.customer, created_at: new Date(Date.now() - 1000 * 60 * 40).toISOString() },
+      { id: 2, type: 'internal_note', body: 'Looks tied to invoice PDF generation after tax recalculation. Checking logs before replying.', user: demoUsers.agent, created_at: new Date(Date.now() - 1000 * 60 * 18).toISOString() },
+    ],
+    activities: [
+      { id: 1, action: 'created', description: 'Ticket created with priority urgent', user: demoUsers.customer, created_at: new Date(Date.now() - 1000 * 60 * 44).toISOString() },
+      { id: 2, action: 'commented', description: 'Added an internal note', user: demoUsers.agent, created_at: new Date(Date.now() - 1000 * 60 * 18).toISOString() },
+    ],
+  },
+  {
+    id: 102,
+    subject: 'Webhook retry failures',
+    description: 'Webhook events are not retrying after a temporary partner outage. Orders are visible but downstream fulfillment never receives the replay.',
+    status: 'open',
+    priority: 'high',
+    tags: ['integrations'],
+    requester: { ...demoUsers.customer, id: 5, name: 'Karan Customer' },
+    requester_id: 5,
+    assignee: demoUsers.agent,
+    assignee_id: 2,
+    comments_count: 1,
+    created_at: new Date(Date.now() - 1000 * 60 * 95).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 34).toISOString(),
+    sla: { breached: false, minutes_remaining: 124 },
+    comments: [
+      { id: 3, type: 'public_reply', body: 'Partner dashboard shows the outage recovered at 11:20, but retries did not fire.', user: { ...demoUsers.customer, id: 5, name: 'Karan Customer' }, created_at: new Date(Date.now() - 1000 * 60 * 70).toISOString() },
+    ],
+    activities: [
+      { id: 3, action: 'assigned', description: 'Assigned to Meera Agent', user: demoUsers.admin, created_at: new Date(Date.now() - 1000 * 60 * 82).toISOString() },
+    ],
+  },
+  {
+    id: 103,
+    subject: 'Mobile app crash on checkout',
+    description: 'Checkout crashes on Android after applying a coupon. Four customers reported it in the last hour.',
+    status: 'open',
+    priority: 'urgent',
+    tags: ['mobile', 'checkout'],
+    requester: demoUsers.customer,
+    requester_id: 4,
+    assignee: { ...demoUsers.agent, id: 3, name: 'Rohan Agent' },
+    assignee_id: 3,
+    comments_count: 3,
+    created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
+    sla: { breached: true, minutes_remaining: -35 },
+    comments: [
+      { id: 4, type: 'public_reply', body: 'The crash happens after coupon SAVE20 is applied.', user: demoUsers.customer, created_at: new Date(Date.now() - 1000 * 60 * 170).toISOString() },
+      { id: 5, type: 'public_reply', body: 'Thanks, we reproduced it and are preparing a rollback for the coupon rule.', user: { ...demoUsers.agent, id: 3, name: 'Rohan Agent' }, created_at: new Date(Date.now() - 1000 * 60 * 12).toISOString() },
+    ],
+    activities: [
+      { id: 4, action: 'status_changed', description: 'Status updated to open', user: { ...demoUsers.agent, id: 3, name: 'Rohan Agent' }, created_at: new Date(Date.now() - 1000 * 60 * 55).toISOString() },
+      { id: 5, action: 'sla_breached', description: 'SLA timer breached', user: null, created_at: new Date(Date.now() - 1000 * 60 * 35).toISOString() },
+    ],
+  },
+  {
+    id: 104,
+    subject: 'CSV export missing rows',
+    description: 'The weekly CSV export is missing older resolved conversations when finance filters by this quarter.',
+    status: 'pending',
+    priority: 'high',
+    tags: ['reports'],
+    requester: { ...demoUsers.customer, id: 5, name: 'Karan Customer' },
+    requester_id: 5,
+    assignee: demoUsers.agent,
+    assignee_id: 2,
+    comments_count: 2,
+    created_at: new Date(Date.now() - 1000 * 60 * 260).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+    sla: { breached: false, minutes_remaining: 208 },
+    comments: [
+      { id: 6, type: 'public_reply', body: 'The export should include resolved tickets from April onward.', user: { ...demoUsers.customer, id: 5, name: 'Karan Customer' }, created_at: new Date(Date.now() - 1000 * 60 * 240).toISOString() },
+    ],
+    activities: [
+      { id: 6, action: 'status_changed', description: 'Status updated to pending', user: demoUsers.agent, created_at: new Date(Date.now() - 1000 * 60 * 45).toISOString() },
+    ],
+  },
+  {
+    id: 105,
+    subject: 'Customer portal typo',
+    description: 'There is a typo on the customer portal confirmation screen after a ticket is submitted.',
+    status: 'resolved',
+    priority: 'low',
+    tags: ['portal'],
+    requester: demoUsers.customer,
+    requester_id: 4,
+    assignee: demoUsers.agent,
+    assignee_id: 2,
+    comments_count: 1,
+    created_at: new Date(Date.now() - 1000 * 60 * 900).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 130).toISOString(),
+    sla: { breached: false, minutes_remaining: 4200 },
+    comments: [
+      { id: 7, type: 'public_reply', body: 'Fixed and shipped. The confirmation copy now reads correctly.', user: demoUsers.agent, created_at: new Date(Date.now() - 1000 * 60 * 130).toISOString() },
+    ],
+    activities: [
+      { id: 7, action: 'status_changed', description: 'Status updated to resolved', user: demoUsers.agent, created_at: new Date(Date.now() - 1000 * 60 * 130).toISOString() },
+    ],
+  },
+]
+
+const statusOptions = ['all', 'open', 'pending', 'resolved', 'closed']
+const priorityOptions = ['all', 'urgent', 'high', 'medium', 'low']
+const assigneeOptions = ['all', 'mine', 'unassigned']
+const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+
 function App() {
-  const [user, setUser] = useState(null)
-  const [token, setToken] = useState(localStorage.getItem('token'))
-  const [tickets, setTickets] = useState([])
-  const [metrics, setMetrics] = useState(null)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [apiMode, setApiMode] = useState(localStorage.getItem('pulsedesk-api-mode') || 'demo')
+  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('pulsedesk-user') || 'null'))
+  const [token, setToken] = useState(localStorage.getItem('pulsedesk-token'))
+  const [tickets, setTickets] = useState(seedTickets)
   const [selectedTicket, setSelectedTicket] = useState(null)
+  const [metrics, setMetrics] = useState(calculateMetrics(seedTickets))
+  const [filters, setFilters] = useState({ status: 'all', priority: 'all', assignee: 'all', search: '' })
   const [replyBody, setReplyBody] = useState('')
   const [replyType, setReplyType] = useState('public_reply')
+  const [loginForm, setLoginForm] = useState({ email: 'admin@example.com', password: 'password' })
+  const [newTicket, setNewTicket] = useState({ subject: '', description: '', priority: 'medium', tags: '' })
+  const [showNewTicket, setShowNewTicket] = useState(false)
+  const [notice, setNotice] = useState('')
 
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+  const usingApi = apiMode === 'api'
 
   useEffect(() => {
-    if (token) {
+    localStorage.setItem('pulsedesk-api-mode', apiMode)
+  }, [apiMode])
+
+  useEffect(() => {
+    if (!user || !token) return
+    if (usingApi) {
       fetchUser()
       fetchTickets()
       fetchMetrics()
+    } else {
+      setMetrics(calculateMetrics(visibleByRole(seedTickets, user)))
+      setTickets(visibleByRole(seedTickets, user))
     }
-  }, [token])
+  }, [user, token, apiMode])
 
-  const fetchMetrics = async () => {
-    try {
-      const res = await fetch(`${apiUrl}/dashboard/metrics`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      if (res.ok) {
-        setMetrics(await res.json())
-      }
-    } catch (e) {
-      console.error(e)
+  useEffect(() => {
+    if (!usingApi || !token) return
+    fetchTickets()
+  }, [filters.status, filters.priority, filters.assignee])
+
+  const filteredTickets = useMemo(() => {
+    const search = filters.search.trim().toLowerCase()
+    return tickets.filter((ticket) => {
+      const assigneeMatch = filters.assignee === 'all'
+        || (filters.assignee === 'mine' && ticket.assignee_id === user?.id)
+        || (filters.assignee === 'unassigned' && !ticket.assignee_id)
+      const statusMatch = filters.status === 'all' || ticket.status === filters.status
+      const priorityMatch = filters.priority === 'all' || ticket.priority === filters.priority
+      const searchMatch = !search
+        || ticket.subject.toLowerCase().includes(search)
+        || ticket.description.toLowerCase().includes(search)
+        || (ticket.tags || []).join(' ').toLowerCase().includes(search)
+      return assigneeMatch && statusMatch && priorityMatch && searchMatch
+    })
+  }, [tickets, filters, user])
+
+  const activeTicket = selectedTicket
+    ? tickets.find((ticket) => ticket.id === selectedTicket.id) || selectedTicket
+    : null
+
+  async function fetchMetrics() {
+    const data = await apiGet('/dashboard/metrics')
+    if (data) setMetrics(data)
+  }
+
+  async function fetchUser() {
+    const data = await apiGet('/me')
+    if (data) {
+      setUser(data)
+      localStorage.setItem('pulsedesk-user', JSON.stringify(data))
     }
   }
 
-  const fetchUser = async () => {
+  async function fetchTickets() {
+    const params = new URLSearchParams()
+    if (filters.status !== 'all') params.set('status', filters.status)
+    if (filters.priority !== 'all') params.set('priority', filters.priority)
+    if (filters.assignee !== 'all') params.set('assignee', filters.assignee)
+    const data = await apiGet(`/tickets${params.toString() ? `?${params}` : ''}`)
+    if (data) setTickets(data)
+  }
+
+  async function apiGet(path) {
     try {
-      const res = await fetch(`${apiUrl}/me`, {
-        headers: { Authorization: `Bearer ${token}` }
+      const response = await fetch(`${apiUrl}${path}`, {
+        headers: { Authorization: `Bearer ${token}` },
       })
-      if (res.ok) {
-        setUser(await res.json())
-      } else {
-        logout()
-      }
-    } catch (e) {
-      console.error(e)
+      if (!response.ok) throw new Error('Request failed')
+      return await response.json()
+    } catch (error) {
+      setNotice('API unavailable. Switched to seeded demo data for the live walkthrough.')
+      setApiMode('demo')
+      setTickets(visibleByRole(seedTickets, user || demoUsers.admin))
+      return null
     }
   }
 
-  const fetchTickets = async () => {
-    try {
-      const res = await fetch(`${apiUrl}/tickets`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      if (res.ok) {
-        setTickets(await res.json())
-      }
-    } catch (e) {
-      console.error(e)
-    }
-  }
+  async function login(event) {
+    event.preventDefault()
+    setNotice('')
 
-  const login = async (e) => {
-    e.preventDefault()
+    if (!usingApi) {
+      const demoUser = Object.values(demoUsers).find((item) => item.email === loginForm.email) || demoUsers.admin
+      setUser(demoUser)
+      setToken('demo-token')
+      localStorage.setItem('pulsedesk-token', 'demo-token')
+      localStorage.setItem('pulsedesk-user', JSON.stringify(demoUser))
+      setTickets(visibleByRole(seedTickets, demoUser))
+      setMetrics(calculateMetrics(visibleByRole(seedTickets, demoUser)))
+      return
+    }
+
     try {
-      const res = await fetch(`${apiUrl}/login`, {
+      const response = await fetch(`${apiUrl}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify(loginForm),
       })
-      if (res.ok) {
-        const data = await res.json()
-        setToken(data.token)
-        localStorage.setItem('token', data.token)
-      } else {
-        alert('Login failed')
-      }
-    } catch (e) {
-      console.error(e)
+      if (!response.ok) throw new Error('Login failed')
+      const data = await response.json()
+      setUser(data.user)
+      setToken(data.token)
+      localStorage.setItem('pulsedesk-token', data.token)
+      localStorage.setItem('pulsedesk-user', JSON.stringify(data.user))
+    } catch (error) {
+      setNotice('API login failed. Use demo mode or start the Laravel API from README steps.')
     }
   }
 
-  const logout = () => {
-    setToken(null)
+  function logout() {
     setUser(null)
-    setTickets([])
-    localStorage.removeItem('token')
+    setToken(null)
+    setSelectedTicket(null)
+    localStorage.removeItem('pulsedesk-token')
+    localStorage.removeItem('pulsedesk-user')
   }
 
-  const viewTicket = async (id) => {
-    try {
-      const res = await fetch(`${apiUrl}/tickets/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      if (res.ok) {
-        setSelectedTicket(await res.json())
+  async function viewTicket(ticket) {
+    if (!usingApi) {
+      setSelectedTicket(ticket)
+      return
+    }
+    const data = await apiGet(`/tickets/${ticket.id}`)
+    if (data) setSelectedTicket(data)
+  }
+
+  async function createTicket(event) {
+    event.preventDefault()
+    const payload = {
+      ...newTicket,
+      tags: newTicket.tags.split(',').map((tag) => tag.trim()).filter(Boolean),
+    }
+
+    if (!usingApi) {
+      const ticket = {
+        ...payload,
+        id: Math.max(...tickets.map((item) => item.id)) + 1,
+        status: 'open',
+        requester: user,
+        requester_id: user.id,
+        assignee: null,
+        assignee_id: null,
+        comments_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        sla: { breached: false, minutes_remaining: payload.priority === 'urgent' ? 60 : 240 },
+        comments: [],
+        activities: [{ id: Date.now(), action: 'created', description: `Ticket created with priority ${payload.priority}`, user, created_at: new Date().toISOString() }],
       }
-    } catch (e) {
-      console.error(e)
+      const next = [ticket, ...tickets]
+      setTickets(next)
+      setMetrics(calculateMetrics(next))
+      setNewTicket({ subject: '', description: '', priority: 'medium', tags: '' })
+      setShowNewTicket(false)
+      return
+    }
+
+    const data = await writeApi('/tickets', 'POST', payload)
+    if (data) {
+      setTickets([data, ...tickets])
+      setShowNewTicket(false)
+      setNewTicket({ subject: '', description: '', priority: 'medium', tags: '' })
+      fetchMetrics()
     }
   }
 
-  const addComment = async (e) => {
-    e.preventDefault()
+  async function updateTicket(id, patch) {
+    if (!usingApi) {
+      const next = tickets.map((ticket) => {
+        if (ticket.id !== id) return ticket
+        return {
+          ...ticket,
+          ...patch,
+          activities: [
+            ...(ticket.activities || []),
+            { id: Date.now(), action: 'updated', description: 'Ticket fields updated', user, created_at: new Date().toISOString() },
+          ],
+        }
+      })
+      setTickets(next)
+      setMetrics(calculateMetrics(next))
+      return
+    }
+
+    const data = await writeApi(`/tickets/${id}`, 'PATCH', patch)
+    if (data) {
+      setTickets(tickets.map((ticket) => (ticket.id === id ? data : ticket)))
+      setSelectedTicket(data)
+      fetchMetrics()
+    }
+  }
+
+  async function claimTicket() {
+    if (!activeTicket) return
+    if (!usingApi) {
+      await updateTicket(activeTicket.id, { assignee: user, assignee_id: user.id })
+      return
+    }
+    const data = await writeApi(`/tickets/${activeTicket.id}/assign`, 'POST', {})
+    if (data) {
+      setTickets(tickets.map((ticket) => (ticket.id === data.id ? data : ticket)))
+      setSelectedTicket(data)
+    }
+  }
+
+  async function addComment(event) {
+    event.preventDefault()
+    if (!replyBody.trim() || !activeTicket) return
+
+    const payload = { body: replyBody.trim(), type: replyType }
+    if (!usingApi) {
+      const comment = { id: Date.now(), ...payload, user, created_at: new Date().toISOString() }
+      const next = tickets.map((ticket) => ticket.id === activeTicket.id
+        ? {
+          ...ticket,
+          comments: [...(ticket.comments || []), comment],
+          comments_count: (ticket.comments_count || 0) + 1,
+          activities: [
+            ...(ticket.activities || []),
+            { id: Date.now() + 1, action: 'commented', description: `Added a ${replyType.replace('_', ' ')}`, user, created_at: new Date().toISOString() },
+          ],
+        }
+        : ticket)
+      setTickets(next)
+      setSelectedTicket(next.find((ticket) => ticket.id === activeTicket.id))
+      setReplyBody('')
+      return
+    }
+
+    const data = await writeApi(`/tickets/${activeTicket.id}/comments`, 'POST', payload)
+    if (data) {
+      setSelectedTicket({
+        ...activeTicket,
+        comments: [...(activeTicket.comments || []), data],
+      })
+      setReplyBody('')
+    }
+  }
+
+  async function writeApi(path, method, body) {
     try {
-      const res = await fetch(`${apiUrl}/tickets/${selectedTicket.id}/comments`, {
-        method: 'POST',
+      const response = await fetch(`${apiUrl}${path}`, {
+        method,
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ body: replyBody, type: replyType })
+        body: JSON.stringify(body),
       })
-      if (res.ok) {
-        const comment = await res.json()
-        setSelectedTicket({
-          ...selectedTicket,
-          comments: [...selectedTicket.comments, comment]
-        })
-        setReplyBody('')
-      }
-    } catch (e) {
-      console.error(e)
+      if (!response.ok) throw new Error('Request failed')
+      return await response.json()
+    } catch (error) {
+      setNotice('API write failed. The demo state is still available for walkthrough.')
+      return null
     }
   }
 
-  const claimTicket = async () => {
-    try {
-      const res = await fetch(`${apiUrl}/tickets/${selectedTicket.id}/assign`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      if (res.ok) {
-        const updated = await res.json()
-        setSelectedTicket({...selectedTicket, assignee: user})
-        fetchTickets()
-      }
-    } catch (e) {
-      console.error(e)
-    }
-  }
-
-  if (!token) {
+  if (!user || !token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900">
-        <form onSubmit={login} className="bg-white p-8 rounded-xl shadow-2xl w-96">
-          <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold text-brand-600">PulseDesk</h1>
-            <p className="text-slate-500 mt-2">Sign in to your workspace</p>
+      <main className="login-shell">
+        <section className="login-panel">
+          <div>
+            <p className="eyebrow">Forge 2 Helpdesk</p>
+            <h1>PulseDesk</h1>
+            <p className="login-copy">Multi-tenant support desk for agents, admins, and customers.</p>
           </div>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition" required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition" required />
-            </div>
-            <button type="submit" className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2 px-4 rounded-lg transition">Sign In</button>
+
+          <div className="mode-toggle" aria-label="Data source">
+            <button className={apiMode === 'demo' ? 'active' : ''} onClick={() => setApiMode('demo')} type="button">Demo</button>
+            <button className={apiMode === 'api' ? 'active' : ''} onClick={() => setApiMode('api')} type="button">Laravel API</button>
           </div>
-          <div className="mt-6 text-sm text-center text-slate-500">
-            Hint: admin@example.com / password
+
+          <form onSubmit={login} className="login-form">
+            <label>
+              Email
+              <input value={loginForm.email} onChange={(event) => setLoginForm({ ...loginForm, email: event.target.value })} type="email" required />
+            </label>
+            <label>
+              Password
+              <input value={loginForm.password} onChange={(event) => setLoginForm({ ...loginForm, password: event.target.value })} type="password" required />
+            </label>
+            <button className="primary-button" type="submit">Sign in</button>
+          </form>
+
+          <div className="demo-logins">
+            <button type="button" onClick={() => setLoginForm({ email: 'admin@example.com', password: 'password' })}>Admin</button>
+            <button type="button" onClick={() => setLoginForm({ email: 'agent1@example.com', password: 'password' })}>Agent</button>
+            <button type="button" onClick={() => setLoginForm({ email: 'customer1@example.com', password: 'password' })}>Customer</button>
           </div>
-        </form>
-      </div>
+          {notice && <p className="notice">{notice}</p>}
+        </section>
+      </main>
     )
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-4 cursor-pointer" onClick={() => setSelectedTicket(null)}>
-            <h1 className="text-xl font-bold text-brand-600">PulseDesk</h1>
-          </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm font-medium text-slate-600">{user?.name} ({user?.role})</span>
-            <button onClick={logout} className="text-sm text-slate-500 hover:text-slate-700 transition">Logout</button>
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="brand-block">
+          <span className="brand-mark">P</span>
+          <div>
+            <strong>PulseDesk</strong>
+            <small>{user.organization?.name || 'Workspace'}</small>
           </div>
         </div>
-      </header>
+        <nav>
+          <button className="nav-active" type="button">Inbox</button>
+          <button type="button">My tickets</button>
+          <button type="button">Customers</button>
+          <button type="button">Audit</button>
+        </nav>
+        <div className="tenant-proof">
+          <span>Tenant scoped</span>
+          <strong>{user.role}</strong>
+          <small>All data is filtered from the authenticated organization.</small>
+        </div>
+      </aside>
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex gap-8">
-        {!selectedTicket ? (
-          <div className="w-full space-y-6">
-            
-            {/* Dashboard Metrics (SHOULD Tier) */}
-            {metrics && (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-                  <p className="text-sm font-medium text-slate-500">Total Tickets</p>
-                  <p className="text-2xl font-bold text-slate-900">{metrics.total_tickets}</p>
-                </div>
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-                  <p className="text-sm font-medium text-slate-500">Open Tickets</p>
-                  <p className="text-2xl font-bold text-brand-600">{metrics.open_tickets}</p>
-                </div>
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-                  <p className="text-sm font-medium text-slate-500">Urgent Priority</p>
-                  <p className="text-2xl font-bold text-rose-600">{metrics.urgent_tickets}</p>
-                </div>
-                <div className="bg-white rounded-xl shadow-sm border border-red-200 p-4 bg-red-50">
-                  <p className="text-sm font-medium text-red-600">SLA Breached</p>
-                  <p className="text-2xl font-bold text-red-700">{metrics.sla_breached}</p>
-                </div>
-              </div>
-            )}
-
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-semibold text-slate-900">Recent Tickets</h2>
-              <button className="bg-brand-600 hover:bg-brand-700 text-white font-medium py-2 px-4 rounded-lg transition shadow-sm">
-                New Ticket
-              </button>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-              <ul className="divide-y divide-slate-200">
-                {tickets.map(ticket => (
-                  <li key={ticket.id} onClick={() => viewTicket(ticket.id)} className="p-4 hover:bg-slate-50 cursor-pointer transition flex items-center justify-between group">
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-3">
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          ticket.status === 'open' ? 'bg-amber-100 text-amber-800' :
-                          ticket.status === 'resolved' ? 'bg-emerald-100 text-emerald-800' :
-                          'bg-slate-100 text-slate-800'
-                        }`}>
-                          {ticket.status.toUpperCase()}
-                        </span>
-                        <h3 className="text-sm font-semibold text-slate-900 group-hover:text-brand-600 transition">{ticket.subject}</h3>
-                      </div>
-                      <p className="text-sm text-slate-500 line-clamp-1">{ticket.description}</p>
-                    </div>
-                    <div className="text-sm text-slate-400">
-                      #{ticket.id}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
+      <main className="workspace">
+        <header className="topbar">
+          <div>
+            <p className="eyebrow">Support operations</p>
+            <h2>{activeTicket ? activeTicket.subject : 'Ticket command center'}</h2>
           </div>
+          <div className="top-actions">
+            <span className="api-pill">{usingApi ? 'Laravel API' : 'Seeded demo'}</span>
+            <span className="user-pill">{user.name}</span>
+            <button className="ghost-button" onClick={logout} type="button">Logout</button>
+          </div>
+        </header>
+
+        {notice && <p className="notice inline-notice">{notice}</p>}
+
+        {!activeTicket ? (
+          <>
+            <section className="metrics-grid">
+              <Metric label="Total" value={metrics.total_tickets} tone="neutral" />
+              <Metric label="Open" value={metrics.open_tickets} tone="blue" />
+              <Metric label="Urgent" value={metrics.urgent_tickets} tone="red" />
+              <Metric label="SLA breached" value={metrics.sla_breached} tone="amber" />
+              <Metric label="Resolved" value={metrics.resolved_tickets} tone="green" />
+            </section>
+
+            <section className="toolbar">
+              <input className="search" placeholder="Search subject, body, tags" value={filters.search} onChange={(event) => setFilters({ ...filters, search: event.target.value })} />
+              <Select label="Status" value={filters.status} options={statusOptions} onChange={(status) => setFilters({ ...filters, status })} />
+              <Select label="Priority" value={filters.priority} options={priorityOptions} onChange={(priority) => setFilters({ ...filters, priority })} />
+              {user.role !== 'customer' && <Select label="Queue" value={filters.assignee} options={assigneeOptions} onChange={(assignee) => setFilters({ ...filters, assignee })} />}
+              <button className="primary-button compact" onClick={() => setShowNewTicket(true)} type="button">New ticket</button>
+            </section>
+
+            <section className="ticket-list">
+              {filteredTickets.map((ticket) => (
+                <button className="ticket-row" key={ticket.id} onClick={() => viewTicket(ticket)} type="button">
+                  <div className="ticket-main">
+                    <div className="row-title">
+                      <span className={`status-dot ${ticket.status}`} />
+                      <strong>{ticket.subject}</strong>
+                      <Badge value={ticket.status} />
+                      <Badge value={ticket.priority} priority />
+                    </div>
+                    <p>{ticket.description}</p>
+                    <div className="tag-list">
+                      {(ticket.tags || []).map((tag) => <span key={tag}>{tag}</span>)}
+                    </div>
+                  </div>
+                  <div className="ticket-meta">
+                    <strong>{formatSla(ticket.sla)}</strong>
+                    <small>{ticket.assignee?.name || 'Unassigned'}</small>
+                    <small>{ticket.comments_count || ticket.comments?.length || 0} replies</small>
+                  </div>
+                </button>
+              ))}
+            </section>
+          </>
         ) : (
-          <div className="w-full max-w-3xl space-y-6">
-            <button onClick={() => setSelectedTicket(null)} className="text-sm text-slate-500 hover:text-slate-700 font-medium flex items-center transition">
-              ← Back to tickets
-            </button>
-            
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="p-6 border-b border-slate-200">
-                <div className="flex items-center space-x-3 mb-4">
-                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800`}>
-                    {selectedTicket.status.toUpperCase()}
-                  </span>
-                  <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    {selectedTicket.priority} Priority
-                  </span>
-                </div>
-                <h2 className="text-2xl font-semibold text-slate-900 mb-2">{selectedTicket.subject}</h2>
-                <div className="text-sm text-slate-500 flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <span>Requested by <strong>{selectedTicket.requester?.name || 'Unknown'}</strong></span>
-                    <span>•</span>
-                    <span>Assigned to <strong>{selectedTicket.assignee?.name || 'Unassigned'}</strong></span>
-                  </div>
-                  {(!selectedTicket.assignee_id && user?.role !== 'customer') && (
-                    <button onClick={claimTicket} className="text-sm bg-brand-100 hover:bg-brand-200 text-brand-700 font-medium py-1 px-3 rounded-lg transition">
-                      Claim Ticket
-                    </button>
-                  )}
-                </div>
-              </div>
-              <div className="p-6 bg-slate-50 text-slate-700 whitespace-pre-wrap">
-                {selectedTicket.description}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-6">
-              <div className="col-span-2 space-y-4">
-                <h3 className="text-lg font-medium text-slate-900">Conversation</h3>
-                {selectedTicket.comments?.map(comment => (
-                  <div key={comment.id} className={`p-4 rounded-xl border ${comment.type === 'internal_note' ? 'bg-amber-50 border-amber-200' : 'bg-white border-slate-200 shadow-sm'}`}>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-semibold text-slate-900">{comment.user?.name}</span>
-                      <span className="text-xs text-slate-500">{new Date(comment.created_at).toLocaleString()}</span>
-                    </div>
-                    <p className="text-slate-700 whitespace-pre-wrap text-sm">{comment.body}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="col-span-1 space-y-4">
-                <h3 className="text-lg font-medium text-slate-900">Activity Log</h3>
-                <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 h-96 overflow-y-auto">
-                  <ul className="space-y-4">
-                    {selectedTicket.activities?.map(activity => (
-                      <li key={activity.id} className="relative flex space-x-3">
-                        <div>
-                          <span className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center ring-4 ring-white">
-                            <div className="h-2 w-2 rounded-full bg-slate-400"></div>
-                          </span>
-                        </div>
-                        <div className="min-w-0 flex-1 pt-0.5 flex justify-between space-x-4">
-                          <div>
-                            <p className="text-xs text-slate-500">
-                              <span className="font-medium text-slate-900">{activity.user?.name || 'System'}</span> {activity.description}
-                            </p>
-                          </div>
-                          <div className="text-right text-xs whitespace-nowrap text-slate-500">
-                            {new Date(activity.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-              <form onSubmit={addComment} className="space-y-4">
-                <textarea
-                  value={replyBody}
-                  onChange={e => setReplyBody(e.target.value)}
-                  placeholder="Type your reply here..."
-                  className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition resize-none h-32 text-sm"
-                  required
-                />
-                <div className="flex items-center justify-between">
-                  {user?.role !== 'customer' ? (
-                    <select value={replyType} onChange={e => setReplyType(e.target.value)} className="border border-slate-300 rounded-lg text-sm px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-brand-500">
-                      <option value="public_reply">Public Reply</option>
-                      <option value="internal_note">Internal Note</option>
-                    </select>
-                  ) : <div></div>}
-                  <button type="submit" className="bg-brand-600 hover:bg-brand-700 text-white font-medium py-2 px-6 rounded-lg transition">
-                    Send Reply
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
+          <TicketDetail
+            ticket={activeTicket}
+            user={user}
+            replyBody={replyBody}
+            replyType={replyType}
+            setReplyBody={setReplyBody}
+            setReplyType={setReplyType}
+            onBack={() => setSelectedTicket(null)}
+            onClaim={claimTicket}
+            onComment={addComment}
+            onUpdate={updateTicket}
+          />
         )}
       </main>
+
+      {showNewTicket && (
+        <div className="modal-backdrop" role="presentation">
+          <form className="modal" onSubmit={createTicket}>
+            <header>
+              <h3>New support ticket</h3>
+              <button type="button" onClick={() => setShowNewTicket(false)}>Close</button>
+            </header>
+            <label>Subject<input value={newTicket.subject} onChange={(event) => setNewTicket({ ...newTicket, subject: event.target.value })} required /></label>
+            <label>Description<textarea value={newTicket.description} onChange={(event) => setNewTicket({ ...newTicket, description: event.target.value })} required /></label>
+            <label>Priority<select value={newTicket.priority} onChange={(event) => setNewTicket({ ...newTicket, priority: event.target.value })}>{priorityOptions.filter((item) => item !== 'all').map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+            <label>Tags<input value={newTicket.tags} onChange={(event) => setNewTicket({ ...newTicket, tags: event.target.value })} placeholder="billing, login" /></label>
+            <button className="primary-button" type="submit">Create ticket</button>
+          </form>
+        </div>
+      )}
     </div>
   )
+}
+
+function TicketDetail({ ticket, user, replyBody, replyType, setReplyBody, setReplyType, onBack, onClaim, onComment, onUpdate }) {
+  return (
+    <section className="detail-layout">
+      <div className="detail-main">
+        <button className="back-button" onClick={onBack} type="button">Back to inbox</button>
+        <article className="ticket-card">
+          <div className="detail-head">
+            <div>
+              <div className="row-title"><Badge value={ticket.status} /><Badge value={ticket.priority} priority /><span className={ticket.sla?.breached ? 'sla breached' : 'sla'}>{formatSla(ticket.sla)}</span></div>
+              <h3>{ticket.subject}</h3>
+              <p>{ticket.description}</p>
+            </div>
+            {!ticket.assignee_id && user.role !== 'customer' && <button className="primary-button compact" onClick={onClaim} type="button">Claim</button>}
+          </div>
+          <dl className="field-grid">
+            <div><dt>Requester</dt><dd>{ticket.requester?.name || 'Unknown'}</dd></div>
+            <div><dt>Assignee</dt><dd>{ticket.assignee?.name || 'Unassigned'}</dd></div>
+            <div><dt>Created</dt><dd>{formatDate(ticket.created_at)}</dd></div>
+            <div><dt>Tags</dt><dd>{(ticket.tags || []).join(', ') || 'none'}</dd></div>
+          </dl>
+        </article>
+
+        {user.role !== 'customer' && (
+          <div className="admin-strip">
+            <Select label="Status" value={ticket.status} options={statusOptions.filter((item) => item !== 'all')} onChange={(status) => onUpdate(ticket.id, { status })} />
+            <Select label="Priority" value={ticket.priority} options={priorityOptions.filter((item) => item !== 'all')} onChange={(priority) => onUpdate(ticket.id, { priority })} />
+          </div>
+        )}
+
+        <section className="conversation">
+          <h3>Conversation</h3>
+          {(ticket.comments || []).map((comment) => (
+            <article className={comment.type === 'internal_note' ? 'comment internal' : 'comment'} key={comment.id}>
+              <header><strong>{comment.user?.name || 'System'}</strong><small>{formatDate(comment.created_at)}</small></header>
+              <p>{comment.body}</p>
+            </article>
+          ))}
+          <form className="reply-box" onSubmit={onComment}>
+            <textarea value={replyBody} onChange={(event) => setReplyBody(event.target.value)} placeholder="Write a clear update for this ticket" required />
+            <div>
+              {user.role !== 'customer' && <select value={replyType} onChange={(event) => setReplyType(event.target.value)}><option value="public_reply">Public reply</option><option value="internal_note">Internal note</option></select>}
+              <button className="primary-button compact" type="submit">Send reply</button>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <aside className="activity-panel">
+        <h3>Activity log</h3>
+        {(ticket.activities || []).map((activity) => (
+          <div className="activity-item" key={activity.id}>
+            <span />
+            <div><strong>{activity.user?.name || 'System'}</strong><p>{activity.description}</p><small>{formatDate(activity.created_at)}</small></div>
+          </div>
+        ))}
+      </aside>
+    </section>
+  )
+}
+
+function Metric({ label, value, tone }) {
+  return <article className={`metric ${tone}`}><span>{label}</span><strong>{value ?? 0}</strong></article>
+}
+
+function Select({ label, value, options, onChange }) {
+  return (
+    <label className="select-label">
+      <span>{label}</span>
+      <select value={value} onChange={(event) => onChange(event.target.value)}>
+        {options.map((option) => <option key={option} value={option}>{option}</option>)}
+      </select>
+    </label>
+  )
+}
+
+function Badge({ value, priority = false }) {
+  return <span className={`badge ${priority ? `priority-${value}` : value}`}>{value}</span>
+}
+
+function visibleByRole(tickets, currentUser) {
+  if (currentUser.role === 'customer') return tickets.filter((ticket) => ticket.requester_id === currentUser.id).map(stripInternalNotes)
+  return tickets
+}
+
+function stripInternalNotes(ticket) {
+  return { ...ticket, comments: (ticket.comments || []).filter((comment) => comment.type !== 'internal_note') }
+}
+
+function calculateMetrics(items) {
+  const active = items.filter((ticket) => ['open', 'pending'].includes(ticket.status))
+  const breached = active.filter((ticket) => ticket.sla?.breached).length
+  return {
+    total_tickets: items.length,
+    open_tickets: items.filter((ticket) => ticket.status === 'open').length,
+    urgent_tickets: items.filter((ticket) => ticket.priority === 'urgent').length,
+    sla_breached: breached,
+    resolved_tickets: items.filter((ticket) => ['resolved', 'closed'].includes(ticket.status)).length,
+    breach_rate: active.length ? Math.round((breached / active.length) * 100) : 0,
+  }
+}
+
+function formatSla(sla) {
+  if (!sla) return 'No SLA'
+  if (sla.breached) return `Breached ${Math.abs(Math.round(sla.minutes_remaining || 0))}m`
+  const minutes = Math.max(0, Math.round(sla.minutes_remaining || 0))
+  if (minutes >= 1440) return `${Math.round(minutes / 1440)}d left`
+  if (minutes >= 60) return `${Math.floor(minutes / 60)}h ${minutes % 60}m left`
+  return `${minutes}m left`
+}
+
+function formatDate(value) {
+  if (!value) return 'now'
+  return new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
 }
 
 export default App
