@@ -31,7 +31,7 @@ const seedTickets = [
     subject: 'Cannot access billing page',
     description: 'The billing page keeps loading forever after the last invoice update. Customer is blocked from downloading invoices before finance close.',
     status: 'open',
-    priority: 'urgent',
+    priority: 'critical',
     tags: ['billing', 'login'],
     requester: demoUsers.customer,
     requester_id: 4,
@@ -77,7 +77,7 @@ const seedTickets = [
     subject: 'Mobile app crash on checkout',
     description: 'Checkout crashes on Android after applying a coupon. Four customers reported it in the last hour.',
     status: 'open',
-    priority: 'urgent',
+    priority: 'critical',
     tags: ['mobile', 'checkout'],
     requester: demoUsers.customer,
     requester_id: 4,
@@ -100,7 +100,7 @@ const seedTickets = [
     id: 104,
     subject: 'CSV export missing rows',
     description: 'The weekly CSV export is missing older resolved conversations when finance filters by this quarter.',
-    status: 'pending',
+    status: 'in_progress',
     priority: 'high',
     tags: ['reports'],
     requester: { ...demoUsers.customer, id: 5, name: 'Karan Customer' },
@@ -142,8 +142,8 @@ const seedTickets = [
   },
 ]
 
-const statusOptions = ['all', 'open', 'pending', 'resolved', 'closed']
-const priorityOptions = ['all', 'urgent', 'high', 'medium', 'low']
+const statusOptions = ['all', 'open', 'in_progress', 'resolved', 'closed']
+const priorityOptions = ['all', 'critical', 'high', 'medium', 'low']
 const assigneeOptions = ['all', 'mine', 'unassigned']
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
@@ -311,7 +311,7 @@ function App() {
         comments_count: 0,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        sla: { breached: false, minutes_remaining: payload.priority === 'urgent' ? 60 : 240 },
+        sla: { breached: false, minutes_remaining: payload.priority === 'critical' ? 60 : payload.priority === 'high' ? 240 : payload.priority === 'medium' ? 720 : 1440 },
         comments: [],
         activities: [{ id: Date.now(), action: 'created', description: `Ticket created with priority ${payload.priority}`, user, created_at: new Date().toISOString() }],
       }
@@ -447,7 +447,10 @@ function App() {
               Password
               <input value={loginForm.password} onChange={(event) => setLoginForm({ ...loginForm, password: event.target.value })} type="password" required />
             </label>
-            <button className="primary-button" type="submit">Sign in</button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button className="primary-button" type="submit" style={{ flex: 1 }}>Sign in</button>
+              <button className="ghost-button" type="button" onClick={() => setNotice('Registration flow is handled via the same demo accounts.')} style={{ flex: 1 }}>Register</button>
+            </div>
           </form>
 
           <div className="demo-logins">
@@ -521,11 +524,10 @@ function App() {
         ) : !activeTicket ? (
           <>
             <section className="metrics-grid">
-              <button className="metric-btn" onClick={() => setFilters({ ...filters, status: 'all', priority: 'all' })}><Metric label="Total" value={metrics.total_tickets} tone="neutral" /></button>
-              <button className="metric-btn" onClick={() => setFilters({ ...filters, status: 'open' })}><Metric label="Open" value={metrics.open_tickets} tone="blue" /></button>
-              <button className="metric-btn" onClick={() => setFilters({ ...filters, priority: 'urgent' })}><Metric label="Urgent" value={metrics.urgent_tickets} tone="red" /></button>
-              <button className="metric-btn" onClick={() => setFilters({ ...filters, status: 'all' })}><Metric label="SLA breached" value={metrics.sla_breached} tone="amber" /></button>
-              <button className="metric-btn" onClick={() => setFilters({ ...filters, status: 'resolved' })}><Metric label="Resolved" value={metrics.resolved_tickets} tone="green" /></button>
+              <button className="metric-btn" onClick={() => setFilters({ ...filters, status: 'all', priority: 'all' })}><Metric label="Total Tickets" value={metrics.total_tickets} tone="neutral" /></button>
+              <button className="metric-btn" onClick={() => setFilters({ ...filters, status: 'open' })}><Metric label="Open Tickets" value={metrics.open_tickets} tone="blue" /></button>
+              <button className="metric-btn" onClick={() => setFilters({ ...filters, status: 'closed' })}><Metric label="Closed Tickets" value={metrics.closed_tickets} tone="green" /></button>
+              <button className="metric-btn" onClick={() => setFilters({ ...filters, assignee: 'mine' })}><Metric label="Assigned Tickets" value={metrics.assigned_tickets} tone="amber" /></button>
             </section>
 
             <section className="toolbar">
@@ -684,15 +686,11 @@ function stripInternalNotes(ticket) {
 }
 
 function calculateMetrics(items) {
-  const active = items.filter((ticket) => ['open', 'pending'].includes(ticket.status))
-  const breached = active.filter((ticket) => ticket.sla?.breached).length
   return {
     total_tickets: items.length,
     open_tickets: items.filter((ticket) => ticket.status === 'open').length,
-    urgent_tickets: items.filter((ticket) => ticket.priority === 'urgent').length,
-    sla_breached: breached,
-    resolved_tickets: items.filter((ticket) => ['resolved', 'closed'].includes(ticket.status)).length,
-    breach_rate: active.length ? Math.round((breached / active.length) * 100) : 0,
+    closed_tickets: items.filter((ticket) => ['resolved', 'closed'].includes(ticket.status)).length,
+    assigned_tickets: items.filter((ticket) => ticket.assignee_id).length,
   }
 }
 

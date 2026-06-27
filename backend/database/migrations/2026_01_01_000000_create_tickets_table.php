@@ -15,8 +15,8 @@ return new class extends Migration
             $table->foreignId('assignee_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('subject');
             $table->text('description');
-            $table->enum('status', ['open', 'pending', 'resolved', 'closed'])->default('open');
-            $table->enum('priority', ['low', 'medium', 'high', 'urgent'])->default('medium');
+            $table->enum('status', ['open', 'in_progress', 'resolved', 'closed'])->default('open');
+            $table->enum('priority', ['low', 'medium', 'high', 'critical'])->default('medium');
             $table->json('tags')->nullable();
             $table->timestamp('sla_breach_at')->nullable();
             $table->timestamps();

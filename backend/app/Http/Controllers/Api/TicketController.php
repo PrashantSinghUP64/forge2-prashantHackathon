@@ -109,9 +109,9 @@ class TicketController extends Controller
         $ticket = Ticket::where('organization_id', $user->organization_id)->findOrFail($id);
 
         $validated = $request->validate([
-            'status' => 'sometimes|in:open,pending,resolved,closed',
-            'priority' => 'sometimes|in:low,medium,high,urgent',
-            'assignee_id' => 'sometimes|nullable|integer',
+            'status' => 'sometimes|in:open,in_progress,resolved,closed',
+            'priority' => 'sometimes|in:low,medium,high,critical',
+            'assignee' => 'sometimes|in:all,mine,unassigned',
             'tags' => 'sometimes|array',
             'tags.*' => 'string|max:40',
         ]);
@@ -210,11 +210,11 @@ class TicketController extends Controller
 
     private function slaDeadline(string $priority)
     {
-        return match ($priority) {
-            'urgent' => now()->addHour(),
+        return match($priority) {
+            'critical' => now()->addHour(),
             'high' => now()->addHours(4),
-            'medium' => now()->addDay(),
-            'low' => now()->addDays(3),
+            'medium' => now()->addHours(12),
+            'low' => now()->addHours(24),
         };
     }
 
