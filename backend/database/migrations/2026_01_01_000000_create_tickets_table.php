@@ -18,6 +18,7 @@ return new class extends Migration
             $table->enum('status', ['open', 'pending', 'resolved', 'closed'])->default('open');
             $table->enum('priority', ['low', 'medium', 'high', 'urgent'])->default('medium');
             $table->json('tags')->nullable();
+            $table->timestamp('sla_breach_at')->nullable();
             $table->timestamps();
         });
     }

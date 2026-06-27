@@ -40,7 +40,7 @@ class TicketController extends Controller
         $user = $request->user();
         
         $ticket = Ticket::where('organization_id', $user->organization_id)
-            ->with(['requester', 'assignee', 'comments.user'])
+            ->with(['requester', 'assignee', 'comments.user', 'activities.user'])
             ->findOrFail($id);
 
         return response()->json($ticket);
@@ -56,6 +56,13 @@ class TicketController extends Controller
             'priority' => 'required|in:low,medium,high,urgent',
         ]);
 
+        $slaBreach = match($validated['priority']) {
+            'urgent' => now()->addHours(1),
+            'high' => now()->addHours(4),
+            'medium' => now()->addHours(24),
+            'low' => now()->addDays(3),
+        };
+
         $ticket = Ticket::create([
             'organization_id' => $user->organization_id,
             'requester_id' => $user->id,
@@ -63,6 +70,15 @@ class TicketController extends Controller
             'description' => $validated['description'],
             'status' => 'open',
             'priority' => $validated['priority'],
+            'sla_breach_at' => $slaBreach,
+        ]);
+
+        \App\Models\ActivityLog::create([
+            'organization_id' => $user->organization_id,
+            'ticket_id' => $ticket->id,
+            'user_id' => $user->id,
+            'action' => 'created',
+            'description' => 'Ticket created with priority ' . $validated['priority'],
         ]);
 
         return response()->json($ticket, 201);
@@ -92,6 +108,37 @@ class TicketController extends Controller
             'type' => $validated['type'],
         ]);
         
+        \App\Models\ActivityLog::create([
+            'organization_id' => $user->organization_id,
+            'ticket_id' => $ticket->id,
+            'user_id' => $user->id,
+            'action' => 'commented',
+            'description' => 'Added a ' . str_replace('_', ' ', $validated['type']),
+        ]);
+        
         return response()->json($comment->load('user'), 201);
+    }
+
+    public function assign(Request $request, $id)
+    {
+        $user = $request->user();
+        
+        if ($user->role === 'customer') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $ticket = Ticket::where('organization_id', $user->organization_id)->findOrFail($id);
+        
+        $ticket->update(['assignee_id' => $user->id]);
+        
+        \App\Models\ActivityLog::create([
+            'organization_id' => $user->organization_id,
+            'ticket_id' => $ticket->id,
+            'user_id' => $user->id,
+            'action' => 'assigned',
+            'description' => 'Claimed the ticket',
+        ]);
+        
+        return response()->json($ticket);
     }
 }

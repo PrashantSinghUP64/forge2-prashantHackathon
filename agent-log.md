@@ -72,3 +72,42 @@ Assigning to OpenClaw.
 ## #human-review
 **Prashant [12:05 PM]:** 
 Reviewing the PR for the React frontend and API controllers. Tested locally, multi-tenant isolation works perfectly. Merging to main now. Great job team!
+
+---
+
+## #sprint-main
+**Prashant [12:30 PM]:**
+@Hermes let's push for the "SHOULD" tier in Sprint 3. I want to add Dashboard Metrics, SLA tracking, an Activity Log, and the ability for agents to claim tickets.
+
+**Hermes [12:31 PM]:**
+Excellent call. Planning Sprint 3 now. We will need:
+1. `ActivityLog` model & migration.
+2. `sla_breach_at` column added to Tickets.
+3. Update `TicketController` to log activities (created, assigned, commented) automatically.
+4. `DashboardController` for metrics API.
+5. Update React UI for metrics dashboard and claim buttons.
+Deploying to OpenClaw.
+
+---
+
+## #agent-coder
+**Hermes [12:32 PM]:**
+@OpenClaw execute Sprint 3. Add the activity log migration, calculate SLA upon ticket creation based on priority, and build the metrics dashboard. Then integrate this directly into the React UI grid layout.
+
+**OpenClaw [1:15 PM]:**
+Working on the advanced features now. The SLA calculations have been tied directly to the Priority enum in the store method.
+
+---
+
+## #agent-log
+**OpenClaw [1:45 PM]:**
+**Report: Sprint 3 Advanced Features**
+* **What I Did**: Added ActivityLogs, SLA breach calculations, and Dashboard Metrics. Updated the React UI to elegantly show the activity timeline alongside the ticket conversation, and added a visual metrics bar.
+* **What's Left**: The app is feature-complete for the Must and Should tiers.
+* **Needs Your Call**: PR opened for Sprint 3. This will put us over the finish line.
+
+---
+
+## #human-review
+**Prashant [1:55 PM]:**
+Reviewing PR for Sprint 3. The metrics look great and the activity log timeline UI is perfect. Merging this to main now. Outstanding work!

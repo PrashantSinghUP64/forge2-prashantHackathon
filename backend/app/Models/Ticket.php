@@ -17,11 +17,13 @@ class Ticket extends Model
         'description',
         'status',
         'priority',
-        'tags'
+        'tags',
+        'sla_breach_at'
     ];
 
     protected $casts = [
-        'tags' => 'array'
+        'tags' => 'array',
+        'sla_breach_at' => 'datetime'
     ];
 
     public function organization()
@@ -42,5 +44,10 @@ class Ticket extends Model
     public function comments()
     {
         return $this->hasMany(Comment::class);
+    }
+    
+    public function activities()
+    {
+        return $this->hasMany(ActivityLog::class);
     }
 }

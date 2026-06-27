@@ -5,6 +5,7 @@ function App() {
   const [user, setUser] = useState(null)
   const [token, setToken] = useState(localStorage.getItem('token'))
   const [tickets, setTickets] = useState([])
+  const [metrics, setMetrics] = useState(null)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [selectedTicket, setSelectedTicket] = useState(null)
@@ -17,8 +18,22 @@ function App() {
     if (token) {
       fetchUser()
       fetchTickets()
+      fetchMetrics()
     }
   }, [token])
+
+  const fetchMetrics = async () => {
+    try {
+      const res = await fetch(`${apiUrl}/dashboard/metrics`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (res.ok) {
+        setMetrics(await res.json())
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   const fetchUser = async () => {
     try {
@@ -112,6 +127,22 @@ function App() {
     }
   }
 
+  const claimTicket = async () => {
+    try {
+      const res = await fetch(`${apiUrl}/tickets/${selectedTicket.id}/assign`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (res.ok) {
+        const updated = await res.json()
+        setSelectedTicket({...selectedTicket, assignee: user})
+        fetchTickets()
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   if (!token) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-900">
@@ -156,6 +187,29 @@ function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex gap-8">
         {!selectedTicket ? (
           <div className="w-full space-y-6">
+            
+            {/* Dashboard Metrics (SHOULD Tier) */}
+            {metrics && (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                  <p className="text-sm font-medium text-slate-500">Total Tickets</p>
+                  <p className="text-2xl font-bold text-slate-900">{metrics.total_tickets}</p>
+                </div>
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                  <p className="text-sm font-medium text-slate-500">Open Tickets</p>
+                  <p className="text-2xl font-bold text-brand-600">{metrics.open_tickets}</p>
+                </div>
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                  <p className="text-sm font-medium text-slate-500">Urgent Priority</p>
+                  <p className="text-2xl font-bold text-rose-600">{metrics.urgent_tickets}</p>
+                </div>
+                <div className="bg-white rounded-xl shadow-sm border border-red-200 p-4 bg-red-50">
+                  <p className="text-sm font-medium text-red-600">SLA Breached</p>
+                  <p className="text-2xl font-bold text-red-700">{metrics.sla_breached}</p>
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-semibold text-slate-900">Recent Tickets</h2>
               <button className="bg-brand-600 hover:bg-brand-700 text-white font-medium py-2 px-4 rounded-lg transition shadow-sm">
@@ -204,10 +258,17 @@ function App() {
                   </span>
                 </div>
                 <h2 className="text-2xl font-semibold text-slate-900 mb-2">{selectedTicket.subject}</h2>
-                <div className="text-sm text-slate-500 flex items-center space-x-4">
-                  <span>Requested by <strong>{selectedTicket.requester?.name || 'Unknown'}</strong></span>
-                  <span>•</span>
-                  <span>Assigned to <strong>{selectedTicket.assignee?.name || 'Unassigned'}</strong></span>
+                <div className="text-sm text-slate-500 flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <span>Requested by <strong>{selectedTicket.requester?.name || 'Unknown'}</strong></span>
+                    <span>•</span>
+                    <span>Assigned to <strong>{selectedTicket.assignee?.name || 'Unassigned'}</strong></span>
+                  </div>
+                  {(!selectedTicket.assignee_id && user?.role !== 'customer') && (
+                    <button onClick={claimTicket} className="text-sm bg-brand-100 hover:bg-brand-200 text-brand-700 font-medium py-1 px-3 rounded-lg transition">
+                      Claim Ticket
+                    </button>
+                  )}
                 </div>
               </div>
               <div className="p-6 bg-slate-50 text-slate-700 whitespace-pre-wrap">
@@ -215,17 +276,46 @@ function App() {
               </div>
             </div>
 
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-slate-900">Conversation</h3>
-              {selectedTicket.comments?.map(comment => (
-                <div key={comment.id} className={`p-4 rounded-xl border ${comment.type === 'internal_note' ? 'bg-amber-50 border-amber-200' : 'bg-white border-slate-200 shadow-sm'}`}>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-semibold text-slate-900">{comment.user?.name}</span>
-                    <span className="text-xs text-slate-500">{new Date(comment.created_at).toLocaleString()}</span>
+            <div className="grid grid-cols-3 gap-6">
+              <div className="col-span-2 space-y-4">
+                <h3 className="text-lg font-medium text-slate-900">Conversation</h3>
+                {selectedTicket.comments?.map(comment => (
+                  <div key={comment.id} className={`p-4 rounded-xl border ${comment.type === 'internal_note' ? 'bg-amber-50 border-amber-200' : 'bg-white border-slate-200 shadow-sm'}`}>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-semibold text-slate-900">{comment.user?.name}</span>
+                      <span className="text-xs text-slate-500">{new Date(comment.created_at).toLocaleString()}</span>
+                    </div>
+                    <p className="text-slate-700 whitespace-pre-wrap text-sm">{comment.body}</p>
                   </div>
-                  <p className="text-slate-700 whitespace-pre-wrap text-sm">{comment.body}</p>
+                ))}
+              </div>
+
+              <div className="col-span-1 space-y-4">
+                <h3 className="text-lg font-medium text-slate-900">Activity Log</h3>
+                <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 h-96 overflow-y-auto">
+                  <ul className="space-y-4">
+                    {selectedTicket.activities?.map(activity => (
+                      <li key={activity.id} className="relative flex space-x-3">
+                        <div>
+                          <span className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center ring-4 ring-white">
+                            <div className="h-2 w-2 rounded-full bg-slate-400"></div>
+                          </span>
+                        </div>
+                        <div className="min-w-0 flex-1 pt-0.5 flex justify-between space-x-4">
+                          <div>
+                            <p className="text-xs text-slate-500">
+                              <span className="font-medium text-slate-900">{activity.user?.name || 'System'}</span> {activity.description}
+                            </p>
+                          </div>
+                          <div className="text-right text-xs whitespace-nowrap text-slate-500">
+                            {new Date(activity.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              ))}
+              </div>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
