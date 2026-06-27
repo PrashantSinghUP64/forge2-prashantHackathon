@@ -163,12 +163,18 @@ function App() {
   const [showNewTicket, setShowNewTicket] = useState(false)
   const [notice, setNotice] = useState('')
   const [activeView, setActiveView] = useState('inbox')
+  const [theme, setTheme] = useState(localStorage.getItem('pulsedesk-theme') || 'light')
 
   const usingApi = apiMode === 'api'
 
   useEffect(() => {
     localStorage.setItem('pulsedesk-api-mode', apiMode)
   }, [apiMode])
+
+  useEffect(() => {
+    localStorage.setItem('pulsedesk-theme', theme)
+    document.documentElement.setAttribute('data-theme', theme)
+  }, [theme])
 
   useEffect(() => {
     if (!user || !token) return
@@ -520,6 +526,7 @@ function App() {
           <button className={activeView === 'inbox' ? 'nav-active' : ''} onClick={() => { setActiveView('inbox'); setFilters({ status: 'all', priority: 'all', assignee: 'all', search: '' }); setSelectedTicket(null); }} type="button">Inbox</button>
           <button className={activeView === 'mine' ? 'nav-active' : ''} onClick={() => { setActiveView('mine'); setFilters({ ...filters, assignee: 'mine' }); setSelectedTicket(null); }} type="button">My tickets</button>
           <button className={activeView === 'customers' ? 'nav-active' : ''} onClick={() => setActiveView('customers')} type="button">Customers</button>
+          <button className={activeView === 'slas' ? 'nav-active' : ''} onClick={() => setActiveView('slas')} type="button">SLA Policies</button>
           <button className={activeView === 'audit' ? 'nav-active' : ''} onClick={() => setActiveView('audit')} type="button">Audit</button>
         </nav>
         <div className="tenant-proof">
@@ -537,6 +544,12 @@ function App() {
           </div>
           <div className="top-actions">
             <span className="api-pill">{usingApi ? 'Laravel API' : 'Seeded demo'}</span>
+            <button className="ghost-button" style={{ padding: '6px' }} onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} title="Toggle Theme">
+               {theme === 'light' ? '🌙' : '☀️'}
+            </button>
+            <button className="ghost-button" style={{ padding: '6px', position: 'relative' }} onClick={() => setActiveView('audit')} title="Notifications">
+               🔔<span style={{ position: 'absolute', top: '2px', right: '4px', width: '8px', height: '8px', background: 'red', borderRadius: '50%' }}></span>
+            </button>
             <span className="user-pill">{user.name}</span>
             <button className="ghost-button" onClick={logout} type="button">Logout</button>
           </div>
@@ -563,6 +576,17 @@ function App() {
                ))}
             </div>
           </section>
+        ) : activeView === 'slas' ? (
+          <section className="customers-view">
+             <h3>SLA Policies</h3>
+             <p>Enterprise service level agreements defining expected response times.</p>
+             <div className="grid">
+                <div className="metric neutral"><span>Priority: Critical</span><strong>1 Hour</strong></div>
+                <div className="metric neutral"><span>Priority: High</span><strong>4 Hours</strong></div>
+                <div className="metric neutral"><span>Priority: Medium</span><strong>12 Hours</strong></div>
+                <div className="metric neutral"><span>Priority: Low</span><strong>24 Hours</strong></div>
+             </div>
+          </section>
         ) : !activeTicket ? (
           <>
             <section className="metrics-grid">
@@ -571,6 +595,20 @@ function App() {
               <button className="metric-btn" onClick={() => setFilters({ ...filters, status: 'closed' })}><Metric label="Closed Tickets" value={metrics.closed_tickets} tone="green" /></button>
               <button className="metric-btn" onClick={() => setFilters({ ...filters, assignee: 'mine' })}><Metric label="Assigned Tickets" value={metrics.assigned_tickets} tone="amber" /></button>
             </section>
+            
+            {metrics.total_tickets > 0 && (
+              <div style={{ margin: '0 0 24px', background: 'var(--card-bg, #fff)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-color, #cad4df)' }}>
+                <h4 style={{ margin: '0 0 12px', fontSize: '13px', color: 'var(--text-secondary, #5c6b7d)', textTransform: 'uppercase' }}>Ticket Distribution Graph</h4>
+                <div style={{ display: 'flex', height: '24px', borderRadius: '12px', overflow: 'hidden', background: '#e2e8f0' }}>
+                   <div style={{ width: `${(metrics.open_tickets / metrics.total_tickets) * 100}%`, background: '#3b82f6' }} title={`Open: ${metrics.open_tickets}`} />
+                   <div style={{ width: `${(metrics.closed_tickets / metrics.total_tickets) * 100}%`, background: '#10b981' }} title={`Closed: ${metrics.closed_tickets}`} />
+                </div>
+                <div style={{ display: 'flex', gap: '16px', marginTop: '12px', fontSize: '12px', color: 'var(--text-secondary, #5c6b7d)' }}>
+                   <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{width: 8, height: 8, background: '#3b82f6', borderRadius: '50%'}}/> Open ({Math.round((metrics.open_tickets / metrics.total_tickets) * 100)}%)</span>
+                   <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{width: 8, height: 8, background: '#10b981', borderRadius: '50%'}}/> Closed ({Math.round((metrics.closed_tickets / metrics.total_tickets) * 100)}%)</span>
+                </div>
+              </div>
+            )}
 
             <section className="toolbar">
               <input className="search" placeholder="Search subject, body, tags" value={filters.search} onChange={(event) => setFilters({ ...filters, search: event.target.value })} />
