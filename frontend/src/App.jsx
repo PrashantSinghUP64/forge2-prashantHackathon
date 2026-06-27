@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import './index.css'
+import ChatWidget from './ChatWidget'
 
 const demoUsers = {
   admin: {
@@ -657,6 +658,8 @@ function App() {
           />
         )}
       </main>
+
+      <ChatWidget />
 
       {showNewTicket && (
         <div className="modal-backdrop" role="presentation">
