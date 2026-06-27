@@ -157,7 +157,8 @@ function App() {
   const [filters, setFilters] = useState({ status: 'all', priority: 'all', assignee: 'all', search: '' })
   const [replyBody, setReplyBody] = useState('')
   const [replyType, setReplyType] = useState('public_reply')
-  const [loginForm, setLoginForm] = useState({ email: 'admin@example.com', password: 'password' })
+  const [loginForm, setLoginForm] = useState({ email: 'admin@example.com', password: 'password', name: '', organization_name: '' })
+  const [isRegistering, setIsRegistering] = useState(false)
   const [newTicket, setNewTicket] = useState({ subject: '', description: '', priority: 'medium', tags: '' })
   const [showNewTicket, setShowNewTicket] = useState(false)
   const [notice, setNotice] = useState('')
@@ -270,6 +271,36 @@ function App() {
       localStorage.setItem('pulsedesk-user', JSON.stringify(data.user))
     } catch (error) {
       setNotice('API login failed. Use demo mode or start the Laravel API from README steps.')
+    }
+  }
+
+  async function registerUser(event) {
+    event.preventDefault()
+    setNotice('')
+    if (!usingApi) {
+      setNotice('Registration requires Laravel API mode.')
+      return
+    }
+
+    try {
+      const response = await fetch(`${apiUrl}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            name: loginForm.name,
+            email: loginForm.email,
+            password: loginForm.password,
+            organization_name: loginForm.organization_name
+        }),
+      })
+      if (!response.ok) throw new Error('Registration failed. Check if email is already taken.')
+      const data = await response.json()
+      setUser(data.user)
+      setToken(data.token)
+      localStorage.setItem('pulsedesk-token', data.token)
+      localStorage.setItem('pulsedesk-user', JSON.stringify(data.user))
+    } catch (error) {
+      setNotice(error.message)
     }
   }
 
@@ -437,20 +468,32 @@ function App() {
             <button className={apiMode === 'api' ? 'active' : ''} onClick={() => setApiMode('api')} type="button">Laravel API</button>
           </div>
 
-          <form onSubmit={login} className="login-form">
-            <label>
-              Email
-              <input value={loginForm.email} onChange={(event) => setLoginForm({ ...loginForm, email: event.target.value })} type="email" required />
-            </label>
-            <label>
-              Password
-              <input value={loginForm.password} onChange={(event) => setLoginForm({ ...loginForm, password: event.target.value })} type="password" required />
-            </label>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button className="primary-button" type="submit" style={{ flex: 1 }}>Sign in</button>
-              <button className="ghost-button" type="button" onClick={() => setNotice('Registration flow is handled via the same demo accounts.')} style={{ flex: 1 }}>Register</button>
-            </div>
-          </form>
+          <form onSubmit={isRegistering ? registerUser : login}>
+              {isRegistering && (
+                <>
+                  <label>
+                    Name
+                    <input value={loginForm.name} onChange={(event) => setLoginForm({ ...loginForm, name: event.target.value })} type="text" required />
+                  </label>
+                  <label>
+                    Organization Name
+                    <input value={loginForm.organization_name} onChange={(event) => setLoginForm({ ...loginForm, organization_name: event.target.value })} type="text" required />
+                  </label>
+                </>
+              )}
+              <label>
+                Email
+                <input value={loginForm.email} onChange={(event) => setLoginForm({ ...loginForm, email: event.target.value })} type="email" required />
+              </label>
+              <label>
+                Password
+                <input value={loginForm.password} onChange={(event) => setLoginForm({ ...loginForm, password: event.target.value })} type="password" required />
+              </label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="primary-button" type="submit" style={{ flex: 1 }}>{isRegistering ? 'Create Account' : 'Sign in'}</button>
+                <button className="ghost-button" type="button" onClick={() => { setIsRegistering(!isRegistering); setNotice('') }} style={{ flex: 1 }}>{isRegistering ? 'Cancel' : 'Register'}</button>
+              </div>
+            </form>
 
           <div className="demo-logins">
             <button type="button" onClick={() => setLoginForm({ email: 'admin@example.com', password: 'password' })}>Admin</button>
