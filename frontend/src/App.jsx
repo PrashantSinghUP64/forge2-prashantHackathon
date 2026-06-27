@@ -161,6 +161,7 @@ function App() {
   const [newTicket, setNewTicket] = useState({ subject: '', description: '', priority: 'medium', tags: '' })
   const [showNewTicket, setShowNewTicket] = useState(false)
   const [notice, setNotice] = useState('')
+  const [activeView, setActiveView] = useState('inbox')
 
   const usingApi = apiMode === 'api'
 
@@ -471,10 +472,10 @@ function App() {
           </div>
         </div>
         <nav>
-          <button className="nav-active" type="button">Inbox</button>
-          <button type="button">My tickets</button>
-          <button type="button">Customers</button>
-          <button type="button">Audit</button>
+          <button className={activeView === 'inbox' ? 'nav-active' : ''} onClick={() => { setActiveView('inbox'); setFilters({ status: 'all', priority: 'all', assignee: 'all', search: '' }); setSelectedTicket(null); }} type="button">Inbox</button>
+          <button className={activeView === 'mine' ? 'nav-active' : ''} onClick={() => { setActiveView('mine'); setFilters({ ...filters, assignee: 'mine' }); setSelectedTicket(null); }} type="button">My tickets</button>
+          <button className={activeView === 'customers' ? 'nav-active' : ''} onClick={() => setActiveView('customers')} type="button">Customers</button>
+          <button className={activeView === 'audit' ? 'nav-active' : ''} onClick={() => setActiveView('audit')} type="button">Audit</button>
         </nav>
         <div className="tenant-proof">
           <span>Tenant scoped</span>
@@ -498,14 +499,33 @@ function App() {
 
         {notice && <p className="notice inline-notice">{notice}</p>}
 
-        {!activeTicket ? (
+        {activeView === 'customers' ? (
+          <section className="customers-view">
+            <h3>Customers Directory</h3>
+            <p>List of customers for {user.organization?.name || 'your workspace'}.</p>
+            <div className="grid">
+               <div className="metric neutral"><span>Nisha Customer</span><strong>customer1@example.com</strong></div>
+               <div className="metric neutral"><span>Karan Customer</span><strong>customer2@example.com</strong></div>
+            </div>
+          </section>
+        ) : activeView === 'audit' ? (
+          <section className="audit-view">
+            <h3>Global Audit Log</h3>
+            <p>Recent activity across the organization.</p>
+            <div className="activity-panel">
+               {(tickets.flatMap(t => t.activities || []).sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5)).map(act => (
+                 <div className="activity-item" key={act.id}><span/><div><strong>{act.user?.name || 'System'}</strong><p>{act.description}</p><small>{formatDate(act.created_at)}</small></div></div>
+               ))}
+            </div>
+          </section>
+        ) : !activeTicket ? (
           <>
             <section className="metrics-grid">
-              <Metric label="Total" value={metrics.total_tickets} tone="neutral" />
-              <Metric label="Open" value={metrics.open_tickets} tone="blue" />
-              <Metric label="Urgent" value={metrics.urgent_tickets} tone="red" />
-              <Metric label="SLA breached" value={metrics.sla_breached} tone="amber" />
-              <Metric label="Resolved" value={metrics.resolved_tickets} tone="green" />
+              <button className="metric-btn" onClick={() => setFilters({ ...filters, status: 'all', priority: 'all' })}><Metric label="Total" value={metrics.total_tickets} tone="neutral" /></button>
+              <button className="metric-btn" onClick={() => setFilters({ ...filters, status: 'open' })}><Metric label="Open" value={metrics.open_tickets} tone="blue" /></button>
+              <button className="metric-btn" onClick={() => setFilters({ ...filters, priority: 'urgent' })}><Metric label="Urgent" value={metrics.urgent_tickets} tone="red" /></button>
+              <button className="metric-btn" onClick={() => setFilters({ ...filters, status: 'all' })}><Metric label="SLA breached" value={metrics.sla_breached} tone="amber" /></button>
+              <button className="metric-btn" onClick={() => setFilters({ ...filters, status: 'resolved' })}><Metric label="Resolved" value={metrics.resolved_tickets} tone="green" /></button>
             </section>
 
             <section className="toolbar">
@@ -528,7 +548,7 @@ function App() {
                     </div>
                     <p>{ticket.description}</p>
                     <div className="tag-list">
-                      {(ticket.tags || []).map((tag) => <span key={tag}>{tag}</span>)}
+                      {(ticket.tags || []).map((tag) => <span key={tag} onClick={(e) => { e.stopPropagation(); setFilters({ ...filters, search: tag }); }}>{tag}</span>)}
                     </div>
                   </div>
                   <div className="ticket-meta">
